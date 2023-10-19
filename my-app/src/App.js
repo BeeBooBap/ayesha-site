@@ -1,24 +1,47 @@
-import logo from './logo.svg';
-import './App.css';
+import { BuilderComponent, builder, useIsPreviewing } from '@builder.io/react';
+import { useEffect, useState } from "react";
+
+// Replace with your Public API Key
+let apiKey = process.env.NEXT_PUBLIC_API_KEY || '';
+
+builder.init(apiKey);
 
 function App() {
+
+    // set whether you're using the Visual Editor,
+    // whether there are changes,
+    // and render the content if found
+      const isPreviewingInBuilder = useIsPreviewing();
+      const [notFound, setNotFound] = useState(false);
+      const [content, setContent] = useState(null);
+
+      // get the page content from Builder
+      useEffect( () => {
+        async function fetchContent() {
+          const content = await builder.get('page', {
+            url: window.location.pathname
+          }).promise();
+          
+          //dynamically renders tab title from builder.io page field 
+          document.title = content.data.title;
+
+          setContent(content);
+          setNotFound(!content);
+        }
+        fetchContent();
+      }, []);
+
+      // if no page is found, return a 404 page
+      if (notFound && !isPreviewingInBuilder) {
+        return <div>Not Found 404 Error</div>
+      }
+
+  // return the page when found
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      {/* Render the Builder page */}
+      <BuilderComponent model="page" content={content} />
+    </>
   );
 }
 
